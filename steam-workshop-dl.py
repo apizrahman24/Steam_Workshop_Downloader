@@ -7,9 +7,7 @@ import os
 st.set_page_config(page_title="Steam Workshop Downloader", page_icon="🎮", layout="centered")
 
 st.title("🎮 Steam Workshop Downloader (SteamCMD Method)")
-st.write("""
-Use SteamCMD (Valve’s official tool) to download public Workshop items safely and reliably.
-""")
+st.write("Use SteamCMD (Valve’s official tool) to download public Workshop items safely and reliably.")
 
 # Input fields
 steamcmd_path = st.text_input(
@@ -17,30 +15,32 @@ steamcmd_path = st.text_input(
     value="C:/steamcmd/steamcmd.exe",
     help="Use forward slashes (/) for Windows paths, e.g., C:/steamcmd/steamcmd.exe"
 )
+
 url = st.text_input("Enter Steam Workshop URL:")
 
-# Extract item ID from Workshop URL
+# --- Improved extraction function ---
 def extract_workshop_id(url: str):
-    """Extract numeric Workshop item ID from a Steam Workshop URL."""
-    match = re.search(r"id=(\\d+)", url)
+    """Extracts the numeric Workshop item ID from any valid Steam Workshop URL."""
+    match = re.search(r"(?:id=|filedetails/)(\d+)", url)
     return match.group(1) if match else None
 
-# Run SteamCMD to download the item
+# --- Download function ---
 def download_workshop_item(app_id: str, item_id: str, steamcmd_path: str):
-    """Runs SteamCMD to download a workshop item (Windows-safe)."""
+    """Runs SteamCMD to download a Workshop item."""
     if not os.path.exists(steamcmd_path):
         return None, f"❌ SteamCMD not found at: {steamcmd_path}"
-    
-    # Wrap path in quotes for Windows safety
+
+    # Build SteamCMD command
     cmd = f'"{steamcmd_path}" +login anonymous +workshop_download_item {app_id} {item_id} +quit'
-    
     try:
-        result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        result = subprocess.run(
+            cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
         return result.stdout, result.stderr
     except Exception as e:
         return None, str(e)
 
-# Step 1: Extract item ID
+# --- Step 1: Detect Workshop ID ---
 if st.button("Next"):
     if not url:
         st.warning("Please enter a valid Workshop URL.")
@@ -52,7 +52,7 @@ if st.button("Next"):
             st.session_state["item_id"] = item_id
             st.success(f"✅ Workshop Item ID detected: {item_id}")
 
-# Step 2: Show App ID + Download button after detection
+# --- Step 2: Enter App ID and Download ---
 if "item_id" in st.session_state:
     st.divider()
     st.subheader("Step 2: Enter App ID and Download")
